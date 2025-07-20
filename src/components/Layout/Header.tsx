@@ -42,12 +42,14 @@ const Header = () => {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="ghost" size="sm" className="text-foreground">
-              <User className="w-4 h-4 mr-2" />
-              Sign In
+            <Button variant="ghost" size="sm" className="text-foreground" asChild>
+              <Link to="/auth">
+                <User className="w-4 h-4 mr-2" />
+                Sign In
+              </Link>
             </Button>
-            <Button variant="accent" size="sm">
-              Join as Supplier
+            <Button variant="accent" size="sm" asChild>
+              <Link to="/auth">Join as Supplier</Link>
             </Button>
           </div>
 
@@ -79,12 +81,14 @@ const Header = () => {
                 </Link>
               ))}
               <div className="flex flex-col space-y-2 pt-4 border-t border-border">
-                <Button variant="ghost" size="sm" className="justify-start">
-                  <User className="w-4 h-4 mr-2" />
-                  Sign In
+                <Button variant="ghost" size="sm" className="justify-start" asChild>
+                  <Link to="/auth" onClick={() => setIsMobileMenuOpen(false)}>
+                    <User className="w-4 h-4 mr-2" />
+                    Sign In
+                  </Link>
                 </Button>
-                <Button variant="accent" size="sm">
-                  Join as Supplier
+                <Button variant="accent" size="sm" asChild>
+                  <Link to="/auth" onClick={() => setIsMobileMenuOpen(false)}>Join as Supplier</Link>
                 </Button>
               </div>
             </div>

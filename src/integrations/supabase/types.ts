@@ -14,7 +14,268 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      categories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name?: string
+        }
+        Relationships: []
+      }
+      inquiries: {
+        Row: {
+          buyer_id: string
+          created_at: string | null
+          delivery_timeline: string | null
+          id: string
+          message: string
+          product_id: string | null
+          quantity_required: number | null
+          status: Database["public"]["Enums"]["inquiry_status"] | null
+          subject: string
+          supplier_id: string | null
+          target_price: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          buyer_id: string
+          created_at?: string | null
+          delivery_timeline?: string | null
+          id?: string
+          message: string
+          product_id?: string | null
+          quantity_required?: number | null
+          status?: Database["public"]["Enums"]["inquiry_status"] | null
+          subject: string
+          supplier_id?: string | null
+          target_price?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          buyer_id?: string
+          created_at?: string | null
+          delivery_timeline?: string | null
+          id?: string
+          message?: string
+          product_id?: string | null
+          quantity_required?: number | null
+          status?: Database["public"]["Enums"]["inquiry_status"] | null
+          subject?: string
+          supplier_id?: string | null
+          target_price?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inquiries_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inquiries_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inquiries_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inquiry_responses: {
+        Row: {
+          attachments: Json | null
+          created_at: string | null
+          id: string
+          inquiry_id: string
+          message: string
+          sender_id: string
+        }
+        Insert: {
+          attachments?: Json | null
+          created_at?: string | null
+          id?: string
+          inquiry_id: string
+          message: string
+          sender_id: string
+        }
+        Update: {
+          attachments?: Json | null
+          created_at?: string | null
+          id?: string
+          inquiry_id?: string
+          message?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inquiry_responses_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "inquiries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inquiry_responses_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          category_id: string | null
+          certification_standards: string[] | null
+          country_of_origin: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          images: Json | null
+          min_order_quantity: number | null
+          name: string
+          price_range: string | null
+          specifications: Json | null
+          status: Database["public"]["Enums"]["product_status"] | null
+          supplier_id: string
+          tags: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          certification_standards?: string[] | null
+          country_of_origin?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          images?: Json | null
+          min_order_quantity?: number | null
+          name: string
+          price_range?: string | null
+          specifications?: Json | null
+          status?: Database["public"]["Enums"]["product_status"] | null
+          supplier_id: string
+          tags?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          certification_standards?: string[] | null
+          country_of_origin?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          images?: Json | null
+          min_order_quantity?: number | null
+          name?: string
+          price_range?: string | null
+          specifications?: Json | null
+          status?: Database["public"]["Enums"]["product_status"] | null
+          supplier_id?: string
+          tags?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          address: string | null
+          city: string | null
+          company_name: string | null
+          contact_person: string | null
+          country: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_verified: boolean | null
+          phone: string | null
+          profile_image_url: string | null
+          state: string | null
+          updated_at: string | null
+          user_id: string
+          user_type: Database["public"]["Enums"]["user_type"]
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          company_name?: string | null
+          contact_person?: string | null
+          country?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_verified?: boolean | null
+          phone?: string | null
+          profile_image_url?: string | null
+          state?: string | null
+          updated_at?: string | null
+          user_id: string
+          user_type?: Database["public"]["Enums"]["user_type"]
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          company_name?: string | null
+          contact_person?: string | null
+          country?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_verified?: boolean | null
+          phone?: string | null
+          profile_image_url?: string | null
+          state?: string | null
+          updated_at?: string | null
+          user_id?: string
+          user_type?: Database["public"]["Enums"]["user_type"]
+          website?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +284,9 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      inquiry_status: "pending" | "responded" | "closed" | "cancelled"
+      product_status: "active" | "inactive" | "pending_approval"
+      user_type: "buyer" | "supplier" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +413,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      inquiry_status: ["pending", "responded", "closed", "cancelled"],
+      product_status: ["active", "inactive", "pending_approval"],
+      user_type: ["buyer", "supplier", "admin"],
+    },
   },
 } as const
