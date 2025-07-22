@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,7 +25,7 @@ interface Profile {
 }
 
 const CreateProduct = () => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
@@ -33,6 +33,8 @@ const CreateProduct = () => {
   const [loading, setLoading] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
   const [currentTag, setCurrentTag] = useState("");
+  const [images, setImages] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -112,47 +114,90 @@ const CreateProduct = () => {
     setTags(prev => prev.filter(tag => tag !== tagToRemove));
   };
 
+  // Add image upload handler
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    if (images.length + files.length > 3) {
+      toast({ title: 'Limit reached', description: 'You can upload up to 3 images.', variant: 'destructive' });
+      return;
+    }
+    for (let i = 0; i < files.length; i++) {
+      const formData = new FormData();
+      formData.append('file', files[i]);
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await res.json();
+        if (res.ok && data.url) {
+          setImages(prev => [...prev, data.url]);
+        } else {
+          toast({ title: 'Upload failed', description: data.error || 'Failed to upload image.', variant: 'destructive' });
+        }
+      } catch (error) {
+        toast({ title: 'Upload failed', description: 'Failed to upload image.', variant: 'destructive' });
+      }
+    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleRemoveImage = (url: string) => {
+    setImages(prev => prev.filter(img => img !== url));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!profile) {
+    if (!user || !token) {
       toast({
-        title: "Error",
-        description: "Profile not loaded. Please try again.",
-        variant: "destructive"
+        title: 'Error',
+        description: 'You must be logged in as a supplier to create a product.',
+        variant: 'destructive',
       });
       return;
     }
-
     setLoading(true);
-
     try {
-      const productData = {
-        ...formData,
-        supplier_id: profile.id,
-        tags: tags,
-        min_order_quantity: formData.min_order_quantity ? parseInt(formData.min_order_quantity) : null,
-        status: 'pending_approval' as const
+      const payload = {
+        title: formData.name,
+        category: formData.category_id,
+        description: formData.description,
+        model: formData.specifications.model || '',
+        capacity: formData.specifications.capacity || '',
+        powerRequirement: formData.specifications.powerRequirement || '',
+        dimensions: formData.specifications.dimensions || '',
+        weight: formData.specifications.weight || '',
+        certifications: formData.certification_standards,
+        basePrice: parseFloat(formData.price_range) || 0,
+        currency: 'USD', // or from form if available
+        moq: formData.min_order_quantity ? parseInt(formData.min_order_quantity) : 1,
+        priceBreaks: [], // add logic if needed
+        images: images,
+        inStock: true,
+        leadTime: '', // add logic if needed
       };
-
-      const { error } = await supabase
-        .from('products')
-        .insert([productData]);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Product created successfully! It will be reviewed before going live.",
+      const res = await fetch('/api/products', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
       });
-
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to create product');
+      toast({
+        title: 'Success',
+        description: 'Product created successfully!',
+      });
       navigate('/dashboard');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating product:', error);
       toast({
-        title: "Error",
-        description: "Failed to create product. Please try again.",
-        variant: "destructive"
+        title: 'Error',
+        description: error.message || 'Failed to create product. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -334,6 +379,27 @@ const CreateProduct = () => {
                 </div>
               </CardContent>
             </Card>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Product Images (up to 3)</label>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                ref={fileInputRef}
+                onChange={handleImageChange}
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/80"
+                disabled={images.length >= 3}
+              />
+              <div className="flex gap-2 mt-2">
+                {images.map((url, i) => (
+                  <div key={i} className="relative group">
+                    <img src={url} alt="Product" className="w-24 h-24 object-cover rounded border" />
+                    <button type="button" onClick={() => handleRemoveImage(url)} className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 text-xs opacity-80 group-hover:opacity-100">&times;</button>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             <div className="flex items-center justify-between pt-6">
               <Button type="button" variant="outline" onClick={() => navigate('/dashboard')}>

@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import Header from "@/components/Layout/Header";
 import Footer from "@/components/Layout/Footer";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Product {
   id: string;
@@ -47,45 +47,153 @@ interface Product {
 
 const ProductDetail = () => {
   const { id } = useParams();
-  const [product, setProduct] = useState<Product | null>(null);
+  const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
+  const { user, token } = useAuth();
+  const [showOrderForm, setShowOrderForm] = useState(false);
+  const [orderQuantity, setOrderQuantity] = useState(1);
+  const [shippingAddress, setShippingAddress] = useState('');
+  const [orderLoading, setOrderLoading] = useState(false);
+  const [orderError, setOrderError] = useState('');
+  const [orderSuccess, setOrderSuccess] = useState(false);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [avgRating, setAvgRating] = useState(0);
+  const [showInquiryForm, setShowInquiryForm] = useState(false);
+  const [inquiryType, setInquiryType] = useState('product_info');
+  const [inquiryMessage, setInquiryMessage] = useState('');
+  const [inquiryRequirements, setInquiryRequirements] = useState('');
+  const [inquiryLoading, setInquiryLoading] = useState(false);
+  const [inquiryError, setInquiryError] = useState('');
+  const [inquirySuccess, setInquirySuccess] = useState(false);
+
 
   useEffect(() => {
     if (id) {
       fetchProduct();
+      fetchReviews();
     }
   }, [id]);
 
   const fetchProduct = async () => {
+    setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('products')
-        .select(`
-          *,
-          categories(name),
-          profiles(
-            id,
-            company_name,
-            contact_person,
-            is_verified,
-            description,
-            city,
-            country,
-            website,
-            profile_image_url
-          )
-        `)
-        .eq('id', id)
-        .eq('status', 'active')
-        .single();
-
-      if (error) throw error;
-      setProduct(data);
+      const res = await fetch(`/api/products/${id}`);
+      const data = await res.json();
+      if (res.ok) {
+        setProduct(data.product);
+      } else {
+        setProduct(null);
+      }
     } catch (error) {
       console.error('Error fetching product:', error);
+      setProduct(null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchReviews = async () => {
+    try {
+      const res = await fetch(`/api/reviews?productId=${id}`);
+      const data = await res.json();
+      if (res.ok) {
+        setReviews(data.reviews || []);
+        setAvgRating(data.avgRating || 0);
+      } else {
+        setReviews([]);
+        setAvgRating(0);
+      }
+    } catch (error) {
+      setReviews([]);
+      setAvgRating(0);
+    }
+  };
+
+  const handleOrderSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setOrderError('');
+    setOrderSuccess(false);
+    if (!user || !token) {
+      setOrderError('You must be logged in as a buyer to place an order.');
+      return;
+    }
+    if (!shippingAddress) {
+      setOrderError('Shipping address is required.');
+      return;
+    }
+    setOrderLoading(true);
+    try {
+      const payload = {
+        supplierId: product.profiles.id, // Assuming product.supplierId is available or can be derived
+        products: [
+          {
+            productId: product.id,
+            quantity: orderQuantity,
+            unitPrice: product.price_range, // Assuming product.basePrice is available
+            specifications: '',
+          },
+        ],
+        shippingAddress,
+        totalAmount: product.price_range * orderQuantity, // Assuming product.basePrice is available
+      };
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to create order');
+      setOrderSuccess(true);
+      setShowOrderForm(false);
+      // Optionally redirect to order detail or show payment button
+    } catch (error: any) {
+      setOrderError(error.message || 'Failed to create order.');
+    } finally {
+      setOrderLoading(false);
+    }
+  };
+
+  const handleInquirySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setInquiryError('');
+    setInquirySuccess(false);
+    if (!user || !token || user.userType !== 'buyer') {
+      setInquiryError('You must be logged in as a buyer to send an inquiry.');
+      return;
+    }
+    if (!inquiryMessage) {
+      setInquiryError('Message is required.');
+      return;
+    }
+    setInquiryLoading(true);
+    try {
+      const payload = {
+        productId: product.id,
+        supplierId: product.profiles?.id || product.supplierId,
+        inquiryType,
+        message: inquiryMessage,
+        requirements: inquiryRequirements ? { text: inquiryRequirements } : undefined,
+      };
+      const res = await fetch('/api/inquiries', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to send inquiry');
+      setInquirySuccess(true);
+      setShowInquiryForm(false);
+    } catch (error: any) {
+      setInquiryError(error.message || 'Failed to send inquiry.');
+    } finally {
+      setInquiryLoading(false);
     }
   };
 
@@ -283,6 +391,9 @@ const ProductDetail = () => {
                     <Phone className="w-4 h-4 mr-2" />
                     Contact Supplier
                   </Button>
+                  <Button variant="outline" className="w-full" onClick={() => setShowOrderForm(true)}>
+                    Order Now
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -352,6 +463,126 @@ const ProductDetail = () => {
           </div>
         </div>
       </main>
+
+      <section className="mt-8">
+        <h2 className="text-xl font-semibold mb-2">Reviews</h2>
+        <div className="flex items-center mb-4">
+          {[...Array(5)].map((_, i) => (
+            <Star key={i} className={i < Math.round(avgRating) ? 'text-yellow-400' : 'text-gray-300'} />
+          ))}
+          <span className="ml-2 text-sm text-muted-foreground">{avgRating.toFixed(1)} / 5</span>
+        </div>
+        {reviews.length === 0 && <p className="text-muted-foreground">No reviews yet.</p>}
+        <ul className="space-y-4">
+          {reviews.map((review) => (
+            <li key={review.id} className="border rounded p-4">
+              <div className="flex items-center mb-1">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className={i < review.rating ? 'text-yellow-400' : 'text-gray-300'} size={16} />
+                ))}
+                <span className="ml-2 text-xs text-muted-foreground">by {review.buyer.email}</span>
+              </div>
+              <div className="text-sm">{review.comment}</div>
+              <div className="text-xs text-muted-foreground mt-1">{new Date(review.createdAt).toLocaleString()}</div>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {showOrderForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-md p-6">
+            <h2 className="text-2xl font-bold mb-4">Place Order</h2>
+            <form onSubmit={handleOrderSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="quantity" className="block text-sm font-medium mb-1">Quantity</label>
+                <input
+                  type="number"
+                  id="quantity"
+                  value={orderQuantity}
+                  onChange={(e) => setOrderQuantity(Number(e.target.value))}
+                  className="w-full p-2 border border-gray-300 rounded"
+                  min="1"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="shippingAddress" className="block text-sm font-medium mb-1">Shipping Address</label>
+                <textarea
+                  id="shippingAddress"
+                  value={shippingAddress}
+                  onChange={(e) => setShippingAddress(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded"
+                  rows={4}
+                  required
+                />
+              </div>
+              {orderError && <p className="text-red-500 text-sm">{orderError}</p>}
+              {orderSuccess && (
+                <p className="text-green-500 text-sm">Order placed successfully!</p>
+              )}
+              <Button type="submit" className="w-full" disabled={orderLoading}>
+                {orderLoading ? 'Placing Order...' : 'Submit Order'}
+              </Button>
+            </form>
+            <Button variant="outline" className="w-full mt-4" onClick={() => setShowOrderForm(false)}>
+              Cancel
+            </Button>
+          </Card>
+        </div>
+      )}
+
+      {user?.userType === 'buyer' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-md p-6">
+            <h2 className="text-2xl font-bold mb-4">Send Inquiry</h2>
+            <form onSubmit={handleInquirySubmit} className="space-y-4">
+              <div>
+                <label htmlFor="inquiryType" className="block text-sm font-medium mb-1">Type</label>
+                <select
+                  id="inquiryType"
+                  value={inquiryType}
+                  onChange={e => setInquiryType(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded"
+                >
+                  <option value="product_info">Product Info</option>
+                  <option value="price_quote">Price Quote</option>
+                  <option value="custom_order">Custom Order</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="inquiryMessage" className="block text-sm font-medium mb-1">Message</label>
+                <textarea
+                  id="inquiryMessage"
+                  value={inquiryMessage}
+                  onChange={e => setInquiryMessage(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded"
+                  rows={3}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="inquiryRequirements" className="block text-sm font-medium mb-1">Requirements (optional)</label>
+                <textarea
+                  id="inquiryRequirements"
+                  value={inquiryRequirements}
+                  onChange={e => setInquiryRequirements(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded"
+                  rows={2}
+                />
+              </div>
+              {inquiryError && <p className="text-red-500 text-sm">{inquiryError}</p>}
+              {inquirySuccess && <p className="text-green-500 text-sm">Inquiry sent successfully!</p>}
+              <Button type="submit" className="w-full" disabled={inquiryLoading}>
+                {inquiryLoading ? 'Sending...' : 'Send Inquiry'}
+              </Button>
+            </form>
+            <Button variant="outline" className="w-full mt-4" onClick={() => setShowInquiryForm(false)}>
+              Cancel
+            </Button>
+          </Card>
+        </div>
+      )}
 
       <Footer />
     </div>

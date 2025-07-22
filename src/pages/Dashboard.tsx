@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Layout/Header";
 import Footer from "@/components/Layout/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -63,65 +62,34 @@ interface Inquiry {
 }
 
 const Dashboard = () => {
-  const { user } = useAuth();
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+  const { user, token } = useAuth();
+  const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
-      fetchProfile();
-      fetchProducts();
-      fetchInquiries();
+    if (user && token) {
+      fetchDashboard();
     }
-  }, [user]);
+  }, [user, token]);
 
-  const fetchProfile = async () => {
+  const fetchDashboard = async () => {
+    setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user?.id)
-        .single();
-
-      if (error) throw error;
-      setProfile(data);
+      const endpoint = user?.userType === 'supplier' ? '/api/dashboard/supplier' : '/api/dashboard/buyer';
+      const res = await fetch(endpoint, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setDashboardData(data);
+      } else {
+        setDashboardData(null);
+      }
     } catch (error) {
-      console.error('Error fetching profile:', error);
-    }
-  };
-
-  const fetchProducts = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('products')
-        .select(`
-          *,
-          categories(name)
-        `)
-        .eq('supplier_id', profile?.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setProducts(data || []);
-    } catch (error) {
-      console.error('Error fetching products:', error);
-    }
-  };
-
-  const fetchInquiries = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('inquiries')
-        .select('*')
-        .or(`buyer_id.eq.${profile?.id},supplier_id.eq.${profile?.id}`)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setInquiries(data || []);
-    } catch (error) {
-      console.error('Error fetching inquiries:', error);
+      console.error('Error fetching dashboard:', error);
+      setDashboardData(null);
     } finally {
       setLoading(false);
     }
@@ -152,21 +120,21 @@ const Dashboard = () => {
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="flex items-center gap-4">
               <Avatar className="w-16 h-16">
-                <AvatarImage src={profile?.profile_image_url} />
+                <AvatarImage src={dashboardData?.profile?.profile_image_url} />
                 <AvatarFallback className="bg-primary text-primary-foreground text-lg">
-                  {profile?.contact_person?.charAt(0) || 'U'}
+                  {dashboardData?.profile?.contact_person?.charAt(0) || 'U'}
                 </AvatarFallback>
               </Avatar>
               <div>
                 <h1 className="text-3xl font-heading font-bold text-foreground">
-                  Welcome back, {profile?.contact_person}
+                  Welcome back, {dashboardData?.profile?.contact_person}
                 </h1>
                 <div className="flex items-center gap-2 mt-1">
-                  <Badge variant={profile?.is_verified ? "default" : "secondary"}>
-                    {profile?.is_verified ? "Verified" : "Unverified"} {profile?.user_type}
+                  <Badge variant={dashboardData?.profile?.is_verified ? "default" : "secondary"}>
+                    {dashboardData?.profile?.is_verified ? "Verified" : "Unverified"} {dashboardData?.profile?.user_type}
                   </Badge>
-                  {profile?.company_name && (
-                    <span className="text-muted-foreground">• {profile.company_name}</span>
+                  {dashboardData?.profile?.company_name && (
+                    <span className="text-muted-foreground">• {dashboardData.profile.company_name}</span>
                   )}
                 </div>
               </div>
@@ -188,7 +156,7 @@ const Dashboard = () => {
               <Package className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{products.length}</div>
+              <div className="text-2xl font-bold">{dashboardData?.products?.length || 0}</div>
               <p className="text-xs text-muted-foreground">Active listings</p>
             </CardContent>
           </Card>
@@ -199,7 +167,7 @@ const Dashboard = () => {
               <MessageSquare className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{inquiries.length}</div>
+              <div className="text-2xl font-bold">{dashboardData?.inquiries?.length || 0}</div>
               <p className="text-xs text-muted-foreground">Total conversations</p>
             </CardContent>
           </Card>
@@ -253,7 +221,7 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {products.slice(0, 3).map((product) => (
+                    {dashboardData?.products?.slice(0, 3).map((product: Product) => (
                       <div key={product.id} className="flex items-center justify-between p-3 border rounded-lg">
                         <div>
                           <h4 className="font-medium">{product.name}</h4>
@@ -264,7 +232,7 @@ const Dashboard = () => {
                         </Badge>
                       </div>
                     ))}
-                    {products.length === 0 && (
+                    {dashboardData?.products?.length === 0 && (
                       <p className="text-muted-foreground text-center py-4">No products yet</p>
                     )}
                   </div>
@@ -278,7 +246,7 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {inquiries.slice(0, 3).map((inquiry) => (
+                    {dashboardData?.inquiries?.slice(0, 3).map((inquiry: Inquiry) => (
                       <div key={inquiry.id} className="flex items-center justify-between p-3 border rounded-lg">
                         <div>
                           <h4 className="font-medium">{inquiry.subject}</h4>
@@ -291,7 +259,7 @@ const Dashboard = () => {
                         </Badge>
                       </div>
                     ))}
-                    {inquiries.length === 0 && (
+                    {dashboardData?.inquiries?.length === 0 && (
                       <p className="text-muted-foreground text-center py-4">No inquiries yet</p>
                     )}
                   </div>
@@ -315,7 +283,7 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {products.map((product) => (
+                  {dashboardData?.products?.map((product: Product) => (
                     <Card key={product.id} className="group hover:shadow-md transition-shadow">
                       <CardHeader>
                         <div className="flex items-center justify-between">
@@ -340,7 +308,7 @@ const Dashboard = () => {
                     </Card>
                   ))}
                 </div>
-                {products.length === 0 && (
+                {dashboardData?.products?.length === 0 && (
                   <div className="text-center py-12">
                     <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                     <h3 className="text-lg font-medium mb-2">No products yet</h3>
@@ -361,7 +329,7 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {inquiries.map((inquiry) => (
+                  {dashboardData?.inquiries?.map((inquiry: Inquiry) => (
                     <Card key={inquiry.id} className="hover:shadow-md transition-shadow">
                       <CardHeader>
                         <div className="flex items-center justify-between">
@@ -398,7 +366,7 @@ const Dashboard = () => {
                       </CardContent>
                     </Card>
                   ))}
-                  {inquiries.length === 0 && (
+                  {dashboardData?.inquiries?.length === 0 && (
                     <div className="text-center py-12">
                       <MessageSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                       <h3 className="text-lg font-medium mb-2">No inquiries yet</h3>
@@ -416,20 +384,20 @@ const Dashboard = () => {
                 <CardTitle>Profile Information</CardTitle>
               </CardHeader>
               <CardContent>
-                {profile && (
+                {dashboardData?.profile && (
                   <div className="space-y-6">
                     <div className="flex items-center gap-6">
                       <Avatar className="w-20 h-20">
-                        <AvatarImage src={profile.profile_image_url} />
+                        <AvatarImage src={dashboardData.profile.profile_image_url} />
                         <AvatarFallback className="bg-primary text-primary-foreground text-xl">
-                          {profile.contact_person?.charAt(0) || 'U'}
+                          {dashboardData.profile.contact_person?.charAt(0) || 'U'}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <h3 className="text-xl font-semibold">{profile.contact_person}</h3>
-                        <p className="text-muted-foreground">{profile.company_name}</p>
-                        <Badge variant={profile.is_verified ? "default" : "secondary"} className="mt-2">
-                          {profile.is_verified ? "Verified" : "Unverified"} {profile.user_type}
+                        <h3 className="text-xl font-semibold">{dashboardData.profile.contact_person}</h3>
+                        <p className="text-muted-foreground">{dashboardData.profile.company_name}</p>
+                        <Badge variant={dashboardData.profile.is_verified ? "default" : "secondary"} className="mt-2">
+                          {dashboardData.profile.is_verified ? "Verified" : "Unverified"} {dashboardData.profile.user_type}
                         </Badge>
                       </div>
                     </div>
@@ -437,22 +405,22 @@ const Dashboard = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-4">
                         <h4 className="font-medium">Contact Information</h4>
-                        {profile.phone && (
+                        {dashboardData.profile.phone && (
                           <div className="flex items-center gap-2">
                             <Phone className="w-4 h-4 text-muted-foreground" />
-                            <span>{profile.phone}</span>
+                            <span>{dashboardData.profile.phone}</span>
                           </div>
                         )}
                         <div className="flex items-center gap-2">
                           <Mail className="w-4 h-4 text-muted-foreground" />
                           <span>{user?.email}</span>
                         </div>
-                        {profile.website && (
+                        {dashboardData.profile.website && (
                           <div className="flex items-center gap-2">
                             <Globe className="w-4 h-4 text-muted-foreground" />
-                            <a href={profile.website} target="_blank" rel="noopener noreferrer" 
+                            <a href={dashboardData.profile.website} target="_blank" rel="noopener noreferrer" 
                                className="text-primary hover:underline">
-                              {profile.website}
+                              {dashboardData.profile.website}
                             </a>
                           </div>
                         )}
@@ -463,21 +431,21 @@ const Dashboard = () => {
                         <div className="flex items-start gap-2">
                           <MapPin className="w-4 h-4 text-muted-foreground mt-1" />
                           <div>
-                            {profile.address && <div>{profile.address}</div>}
+                            {dashboardData.profile.address && <div>{dashboardData.profile.address}</div>}
                             <div>
-                              {profile.city && `${profile.city}, `}
-                              {profile.state && `${profile.state}, `}
-                              {profile.country}
+                              {dashboardData.profile.city && `${dashboardData.profile.city}, `}
+                              {dashboardData.profile.state && `${dashboardData.profile.state}, `}
+                              {dashboardData.profile.country}
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    {profile.description && (
+                    {dashboardData.profile.description && (
                       <div>
                         <h4 className="font-medium mb-2">About</h4>
-                        <p className="text-muted-foreground">{profile.description}</p>
+                        <p className="text-muted-foreground">{dashboardData.profile.description}</p>
                       </div>
                     )}
 
