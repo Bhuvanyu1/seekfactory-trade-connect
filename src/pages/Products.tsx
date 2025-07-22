@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Filter, MapPin, Star, MessageCircle } from "lucide-react";
+import { Link } from "react-router-dom";
 import Header from "@/components/Layout/Header";
 import Footer from "@/components/Layout/Footer";
 import { supabase } from "@/integrations/supabase/client";
@@ -199,9 +200,10 @@ const Products = () => {
                     <span className="text-sm text-muted-foreground">
                       by {product.profiles.company_name}
                     </span>
-                    <Button size="sm" variant="accent">
-                      <MessageCircle className="w-4 h-4 mr-1" />
-                      Inquire
+                    <Button size="sm" variant="accent" asChild>
+                      <Link to={`/product/${product.id}`}>
+                        View Details
+                      </Link>
                     </Button>
                   </div>
                 </CardContent>

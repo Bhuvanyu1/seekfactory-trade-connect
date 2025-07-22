@@ -6,8 +6,11 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Products from "./pages/Products";
+import ProductDetail from "./pages/ProductDetail";
+import SupplierProfile from "./pages/SupplierProfile";
 import Blog from "./pages/Blog";
 import Dashboard from "./pages/Dashboard";
+import ProfileManagement from "./pages/ProfileManagement";
 import CreateProduct from "./pages/CreateProduct";
 import CreateInquiry from "./pages/CreateInquiry";
 import NotFound from "./pages/NotFound";
@@ -24,8 +27,11 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/products" element={<Products />} />
+          <Route path="/product/:id" element={<ProductDetail />} />
+          <Route path="/supplier/:id" element={<SupplierProfile />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard/profile" element={<ProfileManagement />} />
           <Route path="/dashboard/products/new" element={<CreateProduct />} />
           <Route path="/inquiry/new" element={<CreateInquiry />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
