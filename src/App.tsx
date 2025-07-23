@@ -16,6 +16,9 @@ import Dashboard from "./pages/Dashboard";
 import ProfileManagement from "./pages/ProfileManagement";
 import CreateProduct from "./pages/CreateProduct";
 import CreateInquiry from "./pages/CreateInquiry";
+import SupplierGuidelines from "./pages/SupplierGuidelines";
+import VerificationProcess from "./pages/VerificationProcess";
+import SuccessStories from "./pages/SuccessStories";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,6 +44,9 @@ const App = () => (
           <Route path="/dashboard/profile" element={<ProfileManagement />} />
           <Route path="/dashboard/products/new" element={<CreateProduct />} />
           <Route path="/inquiry/new" element={<CreateInquiry />} />
+          <Route path="/supplier-guidelines" element={<SupplierGuidelines />} />
+          <Route path="/verification" element={<VerificationProcess />} />
+          <Route path="/success-stories" element={<SuccessStories />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
