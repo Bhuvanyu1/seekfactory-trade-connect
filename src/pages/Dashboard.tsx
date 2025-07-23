@@ -62,15 +62,15 @@ interface Inquiry {
 }
 
 const Dashboard = () => {
-  const { user, token } = useAuth();
+  const { user, session } = useAuth();
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user && token) {
+    if (user && session) {
       fetchDashboard();
     }
-  }, [user, token]);
+  }, [user, session]);
 
   const fetchDashboard = async () => {
     setLoading(true);
@@ -78,7 +78,7 @@ const Dashboard = () => {
       const endpoint = user?.userType === 'supplier' ? '/api/dashboard/supplier' : '/api/dashboard/buyer';
       const res = await fetch(endpoint, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${session?.access_token}`,
         },
       });
       const data = await res.json();

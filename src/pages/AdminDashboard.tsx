@@ -6,29 +6,29 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
 const AdminDashboard = () => {
-  const { user, token } = useAuth();
+  const { user, session } = useAuth();
   const [analytics, setAnalytics] = useState<any>(null);
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (user && token && user.isAdmin) {
+    if (user && session) {
       fetchData();
-    } else if (user && !user.isAdmin) {
+    } else if (user) {
       setError('Access denied: Admins only');
       setLoading(false);
     }
     // eslint-disable-next-line
-  }, [user, token]);
+  }, [user, session]);
 
   const fetchData = async () => {
     setLoading(true);
     setError('');
     try {
       const [analyticsRes, usersRes] = await Promise.all([
-        fetch('/api/admin/analytics', { headers: { Authorization: `Bearer ${token}` } }),
-        fetch('/api/admin/users', { headers: { Authorization: `Bearer ${token}` } }),
+        fetch('/api/admin/analytics', { headers: { Authorization: `Bearer ${session?.access_token}` } }),
+        fetch('/api/admin/users', { headers: { Authorization: `Bearer ${session?.access_token}` } }),
       ]);
       const analyticsData = await analyticsRes.json();
       const usersData = await usersRes.json();

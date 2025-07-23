@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 import Header from "@/components/Layout/Header";
 import Footer from "@/components/Layout/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,7 +25,7 @@ interface Profile {
 }
 
 const CreateProduct = () => {
-  const { user, token } = useAuth();
+  const { user, session } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
@@ -149,7 +149,7 @@ const CreateProduct = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !token) {
+    if (!user || !session) {
       toast({
         title: 'Error',
         description: 'You must be logged in as a supplier to create a product.',
@@ -159,37 +159,37 @@ const CreateProduct = () => {
     }
     setLoading(true);
     try {
-      const payload = {
-        title: formData.name,
-        category: formData.category_id,
-        description: formData.description,
-        model: formData.specifications.model || '',
-        capacity: formData.specifications.capacity || '',
-        powerRequirement: formData.specifications.powerRequirement || '',
-        dimensions: formData.specifications.dimensions || '',
-        weight: formData.specifications.weight || '',
-        certifications: formData.certification_standards,
-        basePrice: parseFloat(formData.price_range) || 0,
-        currency: 'USD', // or from form if available
-        moq: formData.min_order_quantity ? parseInt(formData.min_order_quantity) : 1,
-        priceBreaks: [], // add logic if needed
-        images: images,
-        inStock: true,
-        leadTime: '', // add logic if needed
-      };
-      const res = await fetch('/api/products', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to create product');
+      // Create product using Supabase
+      const { data: productData, error } = await supabase
+        .from('products')
+        .insert({
+          name: formData.name,
+          description: formData.description,
+          category_id: formData.category_id || null,
+          price_range: formData.price_range,
+          min_order_quantity: formData.min_order_quantity ? parseInt(formData.min_order_quantity) : null,
+          country_of_origin: formData.country_of_origin,
+          certification_standards: formData.certification_standards,
+          specifications: {
+            model: '',
+            capacity: '',
+            powerRequirement: '',
+            dimensions: '',
+            weight: ''
+          },
+          tags: tags,
+          images: images,
+          supplier_id: profile?.id,
+          status: 'pending_approval'
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
       toast({
         title: 'Success',
-        description: 'Product created successfully!',
+        description: 'Product created successfully and is pending approval!',
       });
       navigate('/dashboard');
     } catch (error: any) {

@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 const AdminSupplierVerification = () => {
-  const { user, token } = useAuth();
+  const { user, session } = useAuth();
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -15,18 +15,18 @@ const AdminSupplierVerification = () => {
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    if (user && token && user.isAdmin) {
+    if (user && session) {
       fetchSuppliers();
     }
     // eslint-disable-next-line
-  }, [user, token]);
+  }, [user, session]);
 
   const fetchSuppliers = async () => {
     setLoading(true);
     setError('');
     try {
       // Fetch all supplier profiles (for demo, fetch all users with userType supplier and their profiles)
-      const res = await fetch('/api/admin/users', { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch('/api/admin/users', { headers: { Authorization: `Bearer ${session?.access_token}` } });
       const data = await res.json();
       if (res.ok) {
         // For each supplier, fetch their profile
@@ -57,7 +57,7 @@ const AdminSupplierVerification = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${session?.access_token}`,
         },
         body: JSON.stringify(flags),
       });

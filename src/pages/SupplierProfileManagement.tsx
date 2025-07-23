@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 const SupplierProfileManagement = () => {
-  const { user, token } = useAuth();
+  const { user, session } = useAuth();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -27,11 +27,11 @@ const SupplierProfileManagement = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (user && token && user.userType === 'supplier') {
+    if (user && session && user.userType === 'supplier') {
       fetchProfile();
     }
     // eslint-disable-next-line
-  }, [user, token]);
+  }, [user, session]);
 
   const fetchProfile = async () => {
     setLoading(true);
@@ -112,7 +112,7 @@ const SupplierProfileManagement = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${session?.access_token}`,
         },
         body: JSON.stringify(form),
       });
