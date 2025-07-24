@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
     const sortBy = searchParams.get('sortBy') || 'newest';
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = parseInt(searchParams.get('limit') || '20', 10);
-    const where: any = {};
+    const where: Record<string, any> = {};
     if (category) where.category = category;
     if (inStock !== undefined) where.inStock = inStock === 'true';
     if (query) {
@@ -74,7 +74,7 @@ export async function GET(req: NextRequest) {
       if (location) where.supplierProfile.location = { contains: location, mode: 'insensitive' };
     }
     // Sorting
-    let orderBy: any = { createdAt: 'desc' };
+    let orderBy: Record<string, 'asc' | 'desc'> = { createdAt: 'desc' };
     if (sortBy === 'price_asc') orderBy = { basePrice: 'asc' };
     if (sortBy === 'price_desc') orderBy = { basePrice: 'desc' };
     if (sortBy === 'newest') orderBy = { createdAt: 'desc' };

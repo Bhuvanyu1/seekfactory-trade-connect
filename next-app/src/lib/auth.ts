@@ -17,7 +17,7 @@ export function verifyAuthHeader(authHeader?: string): AuthUser {
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as AuthUser;
     return decoded;
-  } catch (err) {
+  } catch (_err) {
     throw new Error('Invalid or expired token');
   }
 } 

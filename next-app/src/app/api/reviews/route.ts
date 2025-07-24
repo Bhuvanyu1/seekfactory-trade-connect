@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: 'desc' },
       include: { buyer: { select: { email: true } } },
     });
-    const avgRating = reviews.length ? (reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviews.length) : 0;
+    const avgRating = reviews.length ? (reviews.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) / reviews.length) : 0;
     return NextResponse.json({ reviews, avgRating }, { status: 200 });
   } catch (error) {
     console.error(error);

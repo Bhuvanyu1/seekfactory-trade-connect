@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
     const activeSuppliers = await prisma.user.count({ where: { userType: 'supplier', verified: true } });
     const totalOrders = await prisma.order.count();
     const orders = await prisma.order.findMany();
-    const monthlyGMV = orders.reduce((sum: number, o: any) => sum + o.totalAmount, 0); // For demo, sum all
+    const monthlyGMV = orders.reduce((sum: number, o: { totalAmount: number }) => sum + o.totalAmount, 0); // For demo, sum all
     const averageOrderValue = totalOrders ? monthlyGMV / totalOrders : 0;
     // Conversion rate is mocked for now
     const conversionRate = 0.05;
