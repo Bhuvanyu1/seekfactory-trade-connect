@@ -19,6 +19,14 @@ import CreateInquiry from "./pages/CreateInquiry";
 import SupplierGuidelines from "./pages/SupplierGuidelines";
 import VerificationProcess from "./pages/VerificationProcess";
 import SuccessStories from "./pages/SuccessStories";
+import SellerResources from "./pages/SellerResources";
+import ProductCategories from "./pages/ProductCategories";
+import BuyingGuide from "./pages/BuyingGuide";
+import QualityAssurance from "./pages/QualityAssurance";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import ContactUs from "./pages/ContactUs";
+import HelpCenter from "./pages/HelpCenter";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,6 +55,14 @@ const App = () => (
           <Route path="/supplier-guidelines" element={<SupplierGuidelines />} />
           <Route path="/verification" element={<VerificationProcess />} />
           <Route path="/success-stories" element={<SuccessStories />} />
+          <Route path="/seller-resources" element={<SellerResources />} />
+          <Route path="/categories" element={<ProductCategories />} />
+          <Route path="/buying-guide" element={<BuyingGuide />} />
+          <Route path="/quality" element={<QualityAssurance />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/contact" element={<ContactUs />} />
+          <Route path="/help" element={<HelpCenter />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
