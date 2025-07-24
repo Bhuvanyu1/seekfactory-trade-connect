@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 
 const InquiryDetail = () => {
   const { id } = useParams();
-  const { user, token } = useAuth();
+  const { user, session } = useAuth();
   const [inquiry, setInquiry] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -19,11 +19,11 @@ const InquiryDetail = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (user && token && id) {
+    if (user && session && id) {
       fetchInquiry();
     }
     // eslint-disable-next-line
-  }, [user, token, id]);
+  }, [user, session, id]);
 
   const fetchInquiry = async () => {
     setLoading(true);
@@ -31,7 +31,7 @@ const InquiryDetail = () => {
     try {
       const res = await fetch(`/api/inquiries/${id}`, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${session?.access_token}`,
         },
       });
       const data = await res.json();
@@ -60,7 +60,7 @@ const InquiryDetail = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${session?.access_token}`,
         },
         body: JSON.stringify({ content: message }),
       });

@@ -7,16 +7,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
 const Orders = () => {
-  const { user, token } = useAuth();
+  const { user, session } = useAuth();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (user && token) {
+    if (user && session) {
       fetchOrders();
     }
-  }, [user, token]);
+  }, [user, session]);
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -24,7 +24,7 @@ const Orders = () => {
     try {
       const res = await fetch('/api/orders', {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${session?.access_token}`,
         },
       });
       const data = await res.json();

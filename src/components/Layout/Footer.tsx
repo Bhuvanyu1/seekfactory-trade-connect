@@ -58,7 +58,7 @@ const Footer = () => {
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
                 <Mail className="w-5 h-5 text-accent" />
-                <span className="text-white/80">support@seekfactory.com</span>
+                <span className="text-white/80">vimarsh@seekfactory.com</span>
               </div>
               <div className="flex items-center space-x-3">
                 <Phone className="w-5 h-5 text-accent" />
@@ -66,7 +66,7 @@ const Footer = () => {
               </div>
               <div className="flex items-center space-x-3">
                 <MapPin className="w-5 h-5 text-accent" />
-                <span className="text-white/80">Mumbai, India</span>
+                <span className="text-white/80">Delhi, India</span>
               </div>
             </div>
           </div>

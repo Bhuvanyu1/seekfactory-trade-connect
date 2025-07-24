@@ -7,16 +7,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
 const Inquiries = () => {
-  const { user, token } = useAuth();
+  const { user, session } = useAuth();
   const [inquiries, setInquiries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (user && token) {
+    if (user && session) {
       fetchInquiries();
     }
-  }, [user, token]);
+  }, [user, session]);
 
   const fetchInquiries = async () => {
     setLoading(true);
@@ -24,7 +24,7 @@ const Inquiries = () => {
     try {
       const res = await fetch('/api/inquiries', {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${session?.access_token}`,
         },
       });
       const data = await res.json();

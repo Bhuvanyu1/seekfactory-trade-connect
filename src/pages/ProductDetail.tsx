@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,7 +50,7 @@ const ProductDetail = () => {
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
-  const { user, token } = useAuth();
+  const { user, session } = useAuth();
   const [showOrderForm, setShowOrderForm] = useState(false);
   const [orderQuantity, setOrderQuantity] = useState(1);
   const [shippingAddress, setShippingAddress] = useState('');
@@ -114,7 +114,7 @@ const ProductDetail = () => {
     e.preventDefault();
     setOrderError('');
     setOrderSuccess(false);
-    if (!user || !token) {
+    if (!user || !session) {
       setOrderError('You must be logged in as a buyer to place an order.');
       return;
     }
@@ -141,7 +141,7 @@ const ProductDetail = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${session?.access_token}`,
         },
         body: JSON.stringify(payload),
       });
@@ -161,7 +161,7 @@ const ProductDetail = () => {
     e.preventDefault();
     setInquiryError('');
     setInquirySuccess(false);
-    if (!user || !token || user.userType !== 'buyer') {
+    if (!user || !session || user.userType !== 'buyer') {
       setInquiryError('You must be logged in as a buyer to send an inquiry.');
       return;
     }
@@ -182,7 +182,7 @@ const ProductDetail = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${session?.access_token}`,
         },
         body: JSON.stringify(payload),
       });
